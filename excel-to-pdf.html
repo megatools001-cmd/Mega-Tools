@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel to PDF Converter</title>
+<style>
+body {
+    font-family: Arial,sans-serif;
+    background:#f8fbff;
+    text-align:center;
+    padding:20px;
+}
+header {
+    background:#007bff;
+    color:white;
+    padding:15px;
+    font-size:1.5rem;
+    font-weight:bold;
+}
+.tool-card {
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    margin:20px auto;
+    max-width:600px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+input, button {
+    margin:5px;
+    padding:10px;
+    font-size:1rem;
+    border-radius:5px;
+    border:1px solid #ccc;
+}
+button {
+    background:#007bff;
+    color:white;
+    border:none;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover {
+    background:#0056b3;
+}
+@media(max-width:650px){
+    .tool-card{ width:90%; padding:15px; }
+    input, button{ width:80%; }
+}
+</style>
+</head>
+<body>
+
+<header>Excel to PDF Converter</header>
+
+<div class="tool-card">
+  <h2>Convert Excel to PDF</h2>
+  <input type="file" id="excelFile" accept=".xlsx,.xls"><br>
+  <button onclick="excelToPDF()">Convert & Download</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+<script>
+async function excelToPDF(){
+  const fileInput = document.getElementById('excelFile');
+  if(!fileInput.files.length){ alert('Select Excel first'); return; }
+  const file = fileInput.files[0];
+
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, {type:'array'});
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
+
+  const pdfDoc = await PDFLib.PDFDocument.create();
+  const page = pdfDoc.addPage();
+  const { width, height } = page.getSize();
+  const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+  let y = height - 30;
+  rows.forEach(row=>{
+    const text = row.join(' | ');
+    page.drawText(text, { x:20, y:y, size:12, font:font });
+    y -= 20;
+    if(y < 20){ y = height - 30; } // add basic new page handling
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = file.name.replace(/\.(xlsx|xls)$/,'') + '.pdf';
+  link.click();
+}
+</script>
+
+</body>
+</html>
