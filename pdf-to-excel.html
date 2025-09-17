@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF to Excel Converter</title>
+<style>
+body {
+    font-family: Arial,sans-serif;
+    background:#f8fbff;
+    text-align:center;
+    padding:20px;
+}
+header {
+    background:#007bff;
+    color:white;
+    padding:15px;
+    font-size:1.5rem;
+    font-weight:bold;
+}
+.tool-card {
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    margin:20px auto;
+    max-width:600px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+input, button {
+    margin:5px;
+    padding:10px;
+    font-size:1rem;
+    border-radius:5px;
+    border:1px solid #ccc;
+}
+button {
+    background:#007bff;
+    color:white;
+    border:none;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover {
+    background:#0056b3;
+}
+@media(max-width:650px){
+    .tool-card{ width:90%; padding:15px; }
+    input, button{ width:80%; }
+}
+</style>
+</head>
+<body>
+
+<header>PDF to Excel Converter</header>
+
+<div class="tool-card">
+  <h2>Convert PDF to Excel</h2>
+  <input type="file" id="pdfFile" accept="application/pdf"><br>
+  <button onclick="pdfToExcel()">Convert & Download</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+async function pdfToExcel(){
+  const fileInput = document.getElementById('pdfFile');
+  if(!fileInput.files.length){ alert('Select PDF first'); return; }
+  const file = fileInput.files[0];
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  const pdfDoc = await pdfjsLib.getDocument(new Uint8Array(arrayBuffer)).promise;
+
+  const data = [];
+  for(let i=1;i<=pdfDoc.numPages;i++){
+    const page = await pdfDoc.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(item=>item.str).join(" ");
+    data.push([pageText]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "PDF Data");
+  XLSX.writeFile(wb, file.name.replace('.pdf','.xlsx'));
+}
+</script>
+
+</body>
+</html>
