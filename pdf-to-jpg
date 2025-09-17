@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF to JPG Converter</title>
+<style>
+body {
+    font-family: Arial,sans-serif;
+    background:#f8fbff;
+    text-align:center;
+    padding:20px;
+}
+header {
+    background:#007bff;
+    color:white;
+    padding:15px;
+    font-size:1.5rem;
+    font-weight:bold;
+}
+.tool-card {
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    margin:20px auto;
+    max-width:600px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+input, button {
+    margin:5px;
+    padding:10px;
+    font-size:1rem;
+    border-radius:5px;
+    border:1px solid #ccc;
+}
+button {
+    background:#007bff;
+    color:white;
+    border:none;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover {
+    background:#0056b3;
+}
+@media(max-width:650px){
+    .tool-card{ width:90%; padding:15px; }
+    input, button{ width:80%; }
+}
+</style>
+</head>
+<body>
+
+<header>PDF to JPG Converter</header>
+
+<div class="tool-card">
+  <h2>Convert PDF to JPG</h2>
+  <input type="file" id="pdfFile" accept="application/pdf"><br>
+  <button onclick="pdfToJpg()">Convert & Download</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<script>
+async function pdfToJpg(){
+  const fileInput = document.getElementById('pdfFile');
+  if(!fileInput.files.length){ alert('Select PDF first'); return; }
+  const file = fileInput.files[0];
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  const pdfDoc = await pdfjsLib.getDocument(new Uint8Array(arrayBuffer)).promise;
+  const page = await pdfDoc.getPage(1);
+  const viewport = page.getViewport({ scale: 2 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const context = canvas.getContext('2d');
+  await page.render({canvasContext: context, viewport: viewport}).promise;
+
+  canvas.toBlob(blob=>{
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = file.name.replace('.pdf','.jpg');
+    link.click();
+  }, 'image/jpeg', 1.0);
+}
+</script>
+
+</body>
+</html>
