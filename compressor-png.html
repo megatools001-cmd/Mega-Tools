@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PNG Compressor Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1e90ff, #ffffff);
+      text-align: center;
+      padding: 20px;
+    }
+    h2 {
+      color: #004aad;
+    }
+    .tool-box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: auto;
+    }
+    input[type="file"], input[type="number"], input[type="range"] {
+      margin: 10px 0;
+      padding: 8px;
+      width: 90%;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    img {
+      max-width: 100%;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+    .preview {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .box {
+      width: 45%;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .size-info {
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>PNG Advanced Compressor</h2>
+  <div class="tool-box">
+    <input type="file" id="upload" accept="image/png"><br>
+    
+    <label>Quality: <span id="qualityValue">0.8</span></label><br>
+    <input type="range" id="quality" min="0.1" max="1" step="0.1" value="0.8"><br>
+
+    <label>Width (px):</label><br>
+    <input type="number" id="widthInput" placeholder="Enter width"><br>
+
+    <label>Height (px):</label><br>
+    <input type="number" id="heightInput" placeholder="Enter height"><br>
+
+    <button onclick="compressImage()">Compress PNG</button>
+    <a id="download" style="display:none;">
+      <button>Download Compressed PNG</button>
+    </a>
+  </div>
+
+  <div class="preview">
+    <div class="box">
+      <h4>Original</h4>
+      <img id="originalImg">
+      <p class="size-info" id="originalSize"></p>
+    </div>
+    <div class="box">
+      <h4>Compressed</h4>
+      <img id="compressedImg">
+      <p class="size-info" id="compressedSize"></p>
+    </div>
+  </div>
+
+  <script>
+    let originalFile;
+
+    document.getElementById("upload").addEventListener("change", function(e){
+      originalFile = e.target.files[0];
+      if(originalFile){
+        let reader = new FileReader();
+        reader.onload = function(event){
+          document.getElementById("originalImg").src = event.target.result;
+          document.getElementById("originalSize").innerText = "Size: " + (originalFile.size/1024).toFixed(2) + " KB";
+        }
+        reader.readAsDataURL(originalFile);
+      }
+    });
+
+    document.getElementById("quality").addEventListener("input", function(){
+      document.getElementById("qualityValue").innerText = this.value;
+    });
+
+    function compressImage(){
+      if(!originalFile) return alert("Please upload a PNG file first!");
+
+      let quality = parseFloat(document.getElementById("quality").value);
+      let width = parseInt(document.getElementById("widthInput").value);
+      let height = parseInt(document.getElementById("heightInput").value);
+
+      let img = new Image();
+      img.src = URL.createObjectURL(originalFile);
+
+      img.onload = function(){
+        let canvas = document.createElement("canvas");
+        let ctx = canvas.getContext("2d");
+
+        canvas.width = width || img.width;
+        canvas.height = height || img.height;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(function(blob){
+          let newFile = new File([blob], "compressed.png", {type: "image/png"});
+
+          document.getElementById("compressedImg").src = URL.createObjectURL(newFile);
+          document.getElementById("compressedSize").innerText = "Size: " + (newFile.size/1024).toFixed(2) + " KB";
+
+          let downloadLink = document.getElementById("download");
+          downloadLink.href = URL.createObjectURL(newFile);
+          downloadLink.download = "compressed.png";
+          downloadLink.style.display = "inline-block";
+        }, "image/png", quality);
+      }
+    }
+  </script>
+
+</body>
+</html>
