@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIF to Image Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1e90ff, #ffffff);
+      text-align: center;
+      padding: 20px;
+    }
+    h2 {
+      color: #004aad;
+    }
+    .tool-box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: auto;
+    }
+    input[type="file"], select {
+      margin: 10px 0;
+      padding: 8px;
+      width: 90%;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    img {
+      max-width: 100%;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>GIF to Image Converter</h2>
+  <div class="tool-box">
+    <input type="file" id="upload" accept="image/gif"><br>
+    <select id="format">
+      <option value="image/png">PNG</option>
+      <option value="image/jpeg">JPEG</option>
+    </select><br>
+    <button onclick="convertGIF()">Convert</button>
+  </div>
+
+  <div class="preview">
+    <h4>Preview</h4>
+    <img id="previewImage">
+    <a id="downloadBtn" style="display:none;">
+      <button>Download Image</button>
+    </a>
+  </div>
+
+  <script>
+    let uploadedFile;
+
+    document.getElementById("upload").addEventListener("change", function(e){
+      uploadedFile = e.target.files[0];
+      if(uploadedFile){
+        let reader = new FileReader();
+        reader.onload = function(event){
+          document.getElementById("previewImage").src = event.target.result;
+        }
+        reader.readAsDataURL(uploadedFile);
+      }
+    });
+
+    function convertGIF(){
+      if(!uploadedFile) return alert("Please upload a GIF!");
+
+      let format = document.getElementById("format").value;
+
+      let img = new Image();
+      img.src = URL.createObjectURL(uploadedFile);
+      img.onload = function(){
+        let canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        canvas.toBlob(function(blob){
+          let url = URL.createObjectURL(blob);
+          document.getElementById("previewImage").src = url;
+
+          let downloadLink = document.getElementById("downloadBtn");
+          downloadLink.href = url;
+          downloadLink.download = "extracted-image" + (format === "image/png" ? ".png" : ".jpeg");
+          downloadLink.style.display = "block";
+        }, format);
+      }
+    }
+  </script>
+
+</body>
+</html>
